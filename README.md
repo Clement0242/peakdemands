@@ -13,8 +13,23 @@ from peakdemands.report import session_report
 session_report(kin, "match.pdf", athlete="Player 9", mss=9.2, mas=17.0)
 ```
 
-**[Example report (EN)](docs/example_match_en.pdf) · [Exemple de rapport (FR)](docs/example_match_fr.pdf)** —
-a full professional match, from open optical tracking data.
+**Full match report for physical preparation: [EN](docs/example_match_report_en.pdf) ·
+[FR](docs/example_match_report_fr.pdf)** — a whole team over a real professional match (open optical tracking +
+event data). **Single-player session report: [EN](docs/example_match_en.pdf) · [FR](docs/example_match_fr.pdf).**
+
+```python
+from peakdemands.match import load_metrica_match
+from peakdemands.report.match import match_report
+match_report(load_metrica_match(game=2, team="Home"), "match.pdf")
+```
+
+The match report crosses everything: team table (minutes, distance, m/min, HSR, sprints, peak speed,
+accelerations, repeated sequences), average positions and sprint map, load **by game context** (in
+possession, out of possession, ball dead, from the event data), 5-minute heatmap and half-to-half
+change, team intensity with goals, peak demands per player and **references for drills** (median and
+90th percentile of the 1-, 3- and 5-min peaks), direction-sensitive mechanical load with the team
+movement signature and left/right balance, and **leads for the week** from transparent rules
+(recovery priority, end-of-match drop, top-up targets for substitutes, speed exposure, asymmetry).
 
 ## What it does, and where each definition comes from
 

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+{% macro titre(n, txt) %}<div class="titre-section">{{ outlined_number(n) | safe }}<span class="triangle"></span><h2>{{ txt }}</h2><span class="filet"></span></div>{% endmacro %}
+{% macro tiles_(ts) %}<div class="chiffres">{% for c in ts %}<div class="chiffre{% if c.accent %} accent{% endif %}"><div class="val">{{ c.val }}{% if c.unit %}<small>{{ c.unit }}</small>{% endif %}</div><div class="lab">{{ c.lab }}</div><div class="sub">{{ c.sub }}</div></div>{% endfor %}</div>{% endmacro %}
+
+<section>
+  {{ titre(1, L.s_summary) }}
+  {{ tiles_(tiles) }}
+  <div class="encadre"><div class="etiquette">{{ L.reading }}</div>{% for line in reading %}<p>{{ line | safe }}</p>{% endfor %}</div>
+  <figure><img src="{{ fig_team }}" alt=""><figcaption>{{ L.cap_team }}</figcaption></figure>
+</section>
+
+<section class="saut">
+  {{ titre(2, L.s_team) }}
+  <table class="serre">
+    <tr><th>{{ L.player }}</th><th>{{ L.role }}</th><th class="num">{{ L.min_ }}</th><th class="num">{{ L.dist }} (m)</th><th class="num">{{ L.mpm }}</th><th class="num">{{ L.hsr }}</th><th class="num">&gt; 7 m/s (m)</th><th class="num">{{ L.spr }}</th><th class="num">{{ L.vmax }} (m/s)</th><th class="num">{{ L.accdec }}</th><th class="num">{{ L.rss }}</th></tr>
+    {% for r in table %}<tr>{% for c in r %}<td{% if not loop.first and loop.index > 2 %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+  </table>
+  <p class="mention" style="border:0;margin:0 0 2mm;padding:0">* {{ "Rôle estimé d'après la position moyenne. HSR : distance > 5,5 m/s ; Séq. : séquences d'efforts à haute vitesse répétés (≤ 60 s)." if lang == "fr" else "Role estimated from the average position. HSR: distance > 5.5 m/s; Seq.: repeated high-speed effort sequences (≤ 60 s)." }}</p>
+  <div class="deux">
+    <figure><img src="{{ fig_pos }}" alt=""><figcaption>{{ L.cap_pos }}</figcaption></figure>
+    <figure><img src="{{ fig_spr }}" alt=""><figcaption>{{ L.cap_spr }}</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  {{ titre(3, L.s_context) }}
+  <figure><img src="{{ fig_phase }}" alt=""><figcaption>{{ L.cap_phase }}</figcaption></figure>
+  <table>
+    <tr><th></th><th class="num">{{ L.share }}</th><th class="num">m/min</th><th class="num">HSR m/min</th><th class="num">W/kg</th></tr>
+    {% for name, v in phase %}<tr><td>{{ name }}</td><td class="num">{{ v.share | fmt(0) }} %</td><td class="num">{{ v.m_per_min | fmt(0) }}</td><td class="num">{{ v.hsr_per_min | fmt(1) }}</td><td class="num">{{ v.power | fmt(2) }}</td></tr>{% endfor %}
+  </table>
+</section>
+
+<section class="saut">
+  {{ titre(4, L.s_time) }}
+  <figure><img src="{{ fig_heat }}" alt=""><figcaption>{{ L.cap_heat }}</figcaption></figure>
+  <table class="mise"><tr><td class="g"><figure><img src="{{ fig_halves }}" alt=""><figcaption>{{ L.cap_halves }}</figcaption></figure></td><td class="d">
+    <table>
+      <tr><th>{{ L.player }}</th><th class="num">{{ L.h1 }}</th><th class="num">{{ L.h2 }}</th><th class="num">{{ L.delta }}</th><th class="num">W/kg 1</th><th class="num">W/kg 2</th></tr>
+      {% for r in halves %}<tr>{% for c in r %}<td{% if not loop.first %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+    </table></td></tr></table>
+</section>
+
+<section class="saut">
+  {{ titre(5, L.s_peak) }}
+  <table class="mise"><tr><td class="g"><figure><img src="{{ fig_mds }}" alt=""><figcaption>{{ L.cap_mds }}</figcaption></figure></td><td class="d">
+    <table>
+      <tr><th>{{ L.player }}</th><th class="num">1'</th><th class="num">3'</th><th class="num">5'</th><th class="num">HSR 1'</th><th class="num">HSR 3'</th><th class="num">W/kg 1'</th><th class="num">W/kg 3'</th><th class="num">@</th></tr>
+      {% for r in peaks %}<tr>{% for c in r %}<td{% if not loop.first %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+    </table></td></tr></table>
+  <h3><span class="badge">5.1</span>{{ L.drill }}</h3>
+  <table>
+    <tr><th>{{ L.duration }}</th><th class="num">m/min · {{ L.median }}</th><th class="num">P90</th><th class="num">HSR · {{ L.median }}</th><th class="num">P90</th><th class="num">W/kg · {{ L.median }}</th><th class="num">P90</th></tr>
+    {% for r in drill %}<tr>{% for c in r %}<td{% if not loop.first %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+  </table>
+</section>
+
+<section class="saut">
+  {{ titre(6, L.s_mech) }}
+  <div class="deux">
+    <figure><img src="{{ fig_rose }}" alt=""><figcaption>{{ L.cap_rose }}</figcaption></figure>
+    <figure><img src="{{ fig_mech }}" alt=""><figcaption>{{ L.cap_mech }}</figcaption></figure>
+  </div>
+  <table>
+    <tr><th>{{ L.player }}</th><th class="num">{{ L.work }} (kJ/kg)</th><th class="num">J/kg/min</th><th class="num">{{ L.dirsh }} (%)</th><th class="num">{{ L.lr }} (%)</th><th class="num">{{ "Manœuvres" if lang == "fr" else "Manoeuvres" }}</th></tr>
+    {% for r in mech %}<tr>{% for c in r %}<td{% if not loop.first %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+  </table>
+  <p class="mention" style="border:0;margin:0;padding:0">{{ "G/D : (gauche − droite) / total du travail des virages ; positif = plus de virages à gauche." if lang == "fr" else "L/R: (left − right) / total turning work; positive = more left turns." }}</p>
+</section>
+
+<section>
+  {{ titre(7, L.s_leads) }}
+  {% if leads %}
+  <table>
+    {% for k, txt in leads %}<tr><td style="width:24mm"><span class="pastille attention">{{ k }}</span></td><td>{{ txt | safe }}</td></tr>{% endfor %}
+  </table>
+  {% else %}<p>{{ L.none }}</p>{% endif %}
+</section>
+
+<section>
+  {{ titre(8, L.s_method) }}
+  <div class="methode">{% for p in method %}<p>{{ p | safe }}</p>{% endfor %}</div>
+  <p class="mention" style="border:0">{{ "Données :" if lang == "fr" else "Data:" }} {{ source }}.</p>
+  <ul class="refs">{% for r in references %}<li>{{ r }}</li>{% endfor %}</ul>
+</section>
+{% endblock %}

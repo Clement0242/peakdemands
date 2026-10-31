@@ -120,3 +120,8 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .saut { break-before: page; }
 .mention { font-size: 6.8pt; color: var(--mut); margin-top: 4mm; border-top: .25mm solid var(--line); padding-top: 2mm; }
 tr.retenu td { color: var(--navy); font-weight: 600; }
+table.serre { font-size: 7.2pt; } table.serre td, table.serre th { padding-left: 1.4mm; padding-right: 1.4mm; }
+
+table.mise { margin: 0; break-inside: avoid; }
+table.mise > tbody > tr > td, table.mise > tr > td { background: none !important; border: 0; padding: 0; vertical-align: top; }
+table.mise td.g { width: 60mm; padding-right: 5mm; }

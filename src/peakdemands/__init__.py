@@ -16,5 +16,6 @@ from .gps3 import (bundle_mean_speed, bundle_speed, directional_share, estimated
 from .kinematics import Kinematics, from_positions, from_speed
 from .mechanics import FAMILIES, Manoeuvre, MechanicalWork, backlash, mechanical_work
 from .mds import DURATIONS, PeakCurve, peak_curve, rolling_mean
+from .match import Match, PlayerMatch, load_metrica_match
 
 __version__ = "0.1.0"

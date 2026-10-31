@@ -27,7 +27,7 @@
   and a designed PDF report.</p>
   <div class="boutons">
     <a class="bouton" href="https://github.com/Clement0242/peakdemands">Code on GitHub</a>
-    <a class="bouton creux" href="example_match_en.pdf">Example report</a>
+    <a class="bouton creux" href="example_match_report_en.pdf">Example match report</a>
   </div>
   <div class="chiffres">
     <div><b>15</b><span>papers behind the definitions, from Cavagna 1976 to GPS 3.0 (2026)</span></div>
@@ -47,8 +47,15 @@ d   = pk.load_metrica("Player9")                     # an open professional matc
 kin = pk.from_positions(d["time"], d["x"], d["y"])   # or pk.from_speed(time, speed)
 from peakdemands.report import session_report
 session_report(kin, "match.pdf", mss=9.2, mas=17.0)</code></pre>
-  <div class="boutons"><a class="bouton creux" href="example_match_en.pdf">Example report (EN)</a>
-  <a class="bouton creux" href="example_match_fr.pdf">Exemple de rapport (FR)</a></div>
+  <h3>A full match report for physical preparation</h3>
+  <div class="prose"><p>Seven pages on a whole team over a real professional match: player table, average positions and
+  sprint map, load in and out of possession and with the ball dead, 5-minute heatmap, half-to-half change, team intensity
+  with goals, peak demands per player and references for drills, direction-sensitive mechanical load with the movement
+  signature, and leads for the week from transparent rules.</p></div>
+  <div class="boutons"><a class="bouton" href="example_match_report_en.pdf">Match report (EN)</a>
+  <a class="bouton creux" href="example_match_report_fr.pdf">Rapport de match (FR)</a>
+  <a class="bouton creux" href="example_match_en.pdf">Single-player report (EN)</a>
+  <a class="bouton creux" href="example_match_fr.pdf">Rapport individuel (FR)</a></div>
 </div></section>
 
 <section id="bursts"><div class="enveloppe">
