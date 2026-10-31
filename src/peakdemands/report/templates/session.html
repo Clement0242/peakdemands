@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+{% macro titre(n, txt) %}<div class="titre-section">{{ outlined_number(n) | safe }}<span class="triangle"></span><h2>{{ txt }}</h2><span class="filet"></span></div>{% endmacro %}
+
+<section>
+  {{ titre(1, L.summary) }}
+  <div class="chiffres">
+    {% for c in tiles %}
+    <div class="chiffre{% if c.accent %} accent{% endif %}"><div class="val">{{ c.val }}{% if c.unit %}<small>{{ c.unit }}</small>{% endif %}</div><div class="lab">{{ c.lab }}</div><div class="sub">{{ c.sub }}</div></div>
+    {% endfor %}
+  </div>
+  <div class="encadre">
+    <div class="etiquette">{{ L.reading }}</div>
+    {% for line in reading %}<p>{{ line | safe }}</p>{% endfor %}
+  </div>
+</section>
+
+<section>
+  {{ titre(2, L.timeline) }}
+  <figure><img src="{{ fig_tl }}" alt=""><figcaption>{{ L.cap_tl }}</figcaption></figure>
+</section>
+
+<section>
+  {{ titre(3, L.mds) }}
+  <div class="deux">
+    <figure><img src="{{ fig_mds }}" alt=""><figcaption>{{ L.cap_mds }} I = {{ pl[0] }}·t<sup>{{ pl[1] }}</sup>, R² {{ pl[2] }}.</figcaption></figure>
+    <div class="encadre"><div class="etiquette">{{ L.reading }}</div>{% for p in mds_notes %}<p>{{ p | safe }}</p>{% endfor %}</div>
+  </div>
+  <div>
+      <table>
+        <tr><th>{{ L.duration }}</th><th class="num">m/min</th><th class="num">HSR</th><th class="num">acc+dec</th><th class="num">{{ L.fixed }}</th><th class="num">{{ L.at }}</th><th class="num">{{ L.following }}</th><th class="num">≥ 90 %</th></tr>
+        {% for r in mds_rows %}<tr><td>{{ r[0] }}</td><td class="num">{{ r[1] }}</td><td class="num">{{ r[2] }}</td><td class="num">{{ r[3] }}</td><td class="num">−{{ r[4] }}</td><td class="num">{{ r[5] }}</td><td class="num">{{ r[6] }}</td><td class="num">{{ r[7] }}</td></tr>{% endfor %}
+      </table>
+      <p class="mention" style="border:0;margin-top:0;padding-top:0">{{ L.mds_legend }}</p>
+  </div>
+</section>
+
+<section>
+  {{ titre(4, L.bursts) }}
+  <div class="deux">
+    <div>
+      <table>
+        <tr><th>{{ L.kind }}</th><th class="num">{{ L.count }}</th></tr>
+        {% for k, v in counts %}<tr><td>{{ k }}</td><td class="num">{{ v }}</td></tr>{% endfor %}
+        {% for k, v in near.items() %}<tr><td>{{ k }}</td><td class="num">{{ v }}</td></tr>{% endfor %}
+      </table>
+      {% if seqs %}
+      <h3><span class="badge">4.1</span>{{ L.seq }}</h3>
+      <table>
+        <tr><th>{{ L.start }}</th><th class="num">{{ L.count }}</th><th class="num">{{ L.rec }}</th><th class="num">{{ L.dist }} (m)</th></tr>
+        {% for r in seqs %}<tr><td>{{ r[0] }}</td><td class="num">{{ r[1] }}</td><td class="num">{{ r[2] }}</td><td class="num">{{ r[3] }}</td></tr>{% endfor %}
+      </table>
+      {% endif %}
+    </div>
+    <div>
+      <h3><span class="badge">4.2</span>{{ L.sprints }}</h3>
+      {% if bursts %}
+      <table>
+        <tr><th>{{ L.start }}</th><th class="num">{{ L.dur }}</th><th class="num">{{ L.vmax }}</th><th class="num">{{ L.entry }}</th><th class="num">m</th></tr>
+        {% for r in bursts %}<tr><td>{{ r[0] }}</td><td class="num">{{ r[1] }}</td><td class="num">{{ r[2] }}</td><td class="num">{{ r[3] }}</td><td class="num">{{ r[4] }}</td></tr>{% endfor %}
+      </table>
+      {% else %}<p>{{ L.none }}</p>{% endif %}
+    </div>
+  </div>
+</section>
+
+<section>
+  {{ titre(5, L.gps3) }}
+  <div class="deux">
+    {% if fig_dir %}<figure><img src="{{ fig_dir }}" alt=""><figcaption>{{ L.cap_dir }}</figcaption></figure>{% endif %}
+    <div>
+      {% if share %}<div class="chiffres"><div class="chiffre accent"><div class="val">{{ share }}</div><div class="lab">{{ L.dir_share }}</div><div class="sub">a<sub>c</sub>² / |a|², |a| ≥ 1 m/s²</div></div></div>{% endif %}
+      <h3><span class="badge">5.1</span>{{ L.iet }}</h3>
+      <table>
+        <tr><th>{{ L.ref }}</th><th class="num">≥ 60 %</th><th class="num">≥ 70 %</th><th class="num">≥ 80 %</th></tr>
+        <tr><td>{{ L.peak1 }} ({{ peak1 }} m/min)</td>{% for k, v in iet_match.items() %}<td class="num">{{ v | fmt(1) }} min</td>{% endfor %}</tr>
+        {% if iet %}<tr><td>Bundle S1min</td>{% for k, v in iet.items() %}<td class="num">{{ v | fmt(1) }} min</td>{% endfor %}</tr>{% endif %}
+      </table>
+      {% if ref_txt %}<p class="mention" style="border:0;margin:0;padding:0">{{ ref_txt }}. Estimated Maximal MP1min (Eq. 2): {{ mp_est }} W/kg — {{ L.mp_note }}</p>{% endif %}
+    </div>
+  </div>
+</section>
+
+<section>
+  {{ titre(6, L.method) }}
+  <div class="methode">{% for p in method %}<p>{{ p | safe }}</p>{% endfor %}</div>
+  {% if source %}<p class="mention" style="border:0">{{ L.data }} {{ source }}.</p>{% endif %}
+  <ul class="refs">{% for r in references %}<li>{{ r }}</li>{% endfor %}</ul>
+</section>
+{% endblock %}

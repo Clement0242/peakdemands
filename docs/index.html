@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>peakdemands</title>
+<meta name="description" content="Bursts, most demanding scenarios and GPS 3.0 exposure metrics from tracking data, in Python, with a PDF report.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="projet.css">
+</head>
+<body>
+<header class="barre"><div class="enveloppe">
+  <a class="marque" href="https://clement0242.github.io"><b>CV</b> Clément Verdier</a>
+  <nav aria-label="Sections">
+    <a href="#start">Start</a><a href="#bursts">Bursts</a><a href="#mds">MDS</a><a href="#gps3">GPS 3.0</a><a href="#tests">Tests</a>
+  </nav>
+</div></header>
+
+<main>
+<div class="tete"><div class="enveloppe">
+  <p class="surtitre">Python library · tracking data · football</p>
+  <h1>Peak demands, <em>sourced line by line</em></h1>
+  <p class="chapeau">From GPS, LPS or optical tracking to the efforts of a session, its most demanding scenarios and the
+  exposure metrics proposed by "GPS 3.0": every definition taken from a paper read in full, every parameter exposed,
+  and a designed PDF report.</p>
+  <div class="boutons">
+    <a class="bouton" href="https://github.com/Clement0242/peakdemands">Code on GitHub</a>
+    <a class="bouton creux" href="example_match_en.pdf">Example report</a>
+  </div>
+  <div class="chiffres">
+    <div><b>13</b><span>papers behind the definitions, from Spencer 2004 to GPS 3.0 (2026)</span></div>
+    <div><b>53 %</b><span>of a midfielder's acceleration comes from turning, invisible to speed-only metrics</span></div>
+    <div><b>10</b><span>tests on known ground truths, on every push</span></div>
+    <div><b>2</b><span>dependencies: NumPy and SciPy (the report is optional)</span></div>
+  </div>
+</div></div>
+
+<section id="start"><div class="enveloppe">
+  <p class="etiq">Get started</p>
+  <h2>From positions to a report</h2>
+<pre><code>pip install "peakdemands[report] @ git+https://github.com/Clement0242/peakdemands"
+
+import peakdemands as pk
+d   = pk.load_metrica("Player9")                     # an open professional match, 25 Hz
+kin = pk.from_positions(d["time"], d["x"], d["y"])   # or pk.from_speed(time, speed)
+from peakdemands.report import session_report
+session_report(kin, "match.pdf", mss=9.2, mas=17.0)</code></pre>
+  <div class="boutons"><a class="bouton creux" href="example_match_en.pdf">Example report (EN)</a>
+  <a class="bouton creux" href="example_match_fr.pdf">Exemple de rapport (FR)</a></div>
+</div></section>
+
+<section id="bursts"><div class="enveloppe">
+  <p class="etiq">Bursts</p>
+  <h2>Efforts, and how they cluster</h2>
+  <div class="prose"><p>Sprints and high-speed efforts (absolute or relative to maximal sprinting speed, with the 85/90/95 %
+  exposures of Buchheit et al. 2023), accelerations and decelerations (> 2.5 m/s², Harper et al. 2019), turns, then
+  their clustering: repeated-sprint sequences (≥ 2 efforts ≤ 60 s apart, Buchheit et al. 2010) and the stricter
+  repeated-sprint bouts of Spencer et al. (2004). Every threshold is a parameter.</p></div>
+</div></section>
+
+<section id="mds"><div class="enveloppe">
+  <p class="etiq">Most demanding scenarios</p>
+  <h2>Rolling windows, and what a peak alone hides</h2>
+  <div class="prose"><p>Peaks of the rolling average for windows of 15 s to 10 min, next to fixed epochs, which
+  underestimate them (Varley et al. 2012; Fereday et al. 2020), and a power law across durations (Delaney et al. 2018).
+  Novak et al. (2021) showed the single worst-case value is unstable: each peak comes with its time, the window that
+  follows and how many separate passages reach 90 % of it.</p></div>
+  <figure><div class="feuille"><img src="mds_direction.png" alt="Left: peak distance per minute against window length for three players, rolling and fixed. Right: tangential against centripetal acceleration for one match." width="1560" height="546" loading="lazy"></div>
+  <figcaption>Three players of the same match (left); one midfielder's complete acceleration (right).</figcaption></figure>
+</div></section>
+
+<section id="gps3"><div class="enveloppe">
+  <p class="etiq">GPS 3.0</p>
+  <h2>What can be implemented, and what cannot</h2>
+  <div class="prose"><p>Buchheit et al. (2026) ask for direction-sensitive mechanics, capacity anchors and exposure rather
+  than distance in zones. Implemented as published: the complete acceleration, Bundle's speed-duration model with the
+  Estimated Maximal S1min and MP1min equations, the intensity exposure time (IET) over 60-s rolling windows and its weekly
+  sum (WIET).</p></div>
+  <div class="constat"><p>The paper's mechanical work is not reproduced.</p>
+  <p>It comes from a proprietary analyser whose algorithm is not published. The package offers open, documented proxies
+  (speed × complete acceleration, the directional share) and says plainly that their values are not comparable.</p></div>
+</div></section>
+
+<section id="tests"><div class="enveloppe">
+  <p class="etiq">Tests</p>
+  <h2>Checked against known answers</h2>
+  <div class="tableau"><table>
+    <thead><tr><th>Check</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Running a circle at constant speed: all the acceleration is centripetal (3 m/s²)</td><td><span class="pastille ok">within 2 %</span></td></tr>
+      <tr><td>Straight constant acceleration, from positions and from speed</td><td><span class="pastille ok">within 1 %</span></td></tr>
+      <tr><td>Simulated session: every sprint found, at the right time</td><td><span class="pastille ok">6 / 6</span></td></tr>
+      <tr><td>A hard minute straddling two fixed epochs: found by the rolling window, missed by fixed epochs</td><td><span class="pastille ok">exact</span></td></tr>
+      <tr><td>Bundle's 1-min constant (0.695), IET on a known profile, Spencer bouts</td><td><span class="pastille ok">exact</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose"><p>Data: Metrica Sports sample data (downloaded on use, not redistributed).</p></div>
+</div></section>
+</main>
+
+<footer><div class="enveloppe">
+  <a href="https://clement0242.github.io">Clément Verdier</a> · data engineer &amp; sport scientist ·
+  <a href="https://github.com/Clement0242/peakdemands">source</a> · MIT licence
+</div></footer>
+</body>
+</html>
