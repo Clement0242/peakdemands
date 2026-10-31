@@ -13,6 +13,16 @@ from peakdemands.report import session_report
 session_report(kin, "match.pdf", athlete="Player 9", mss=9.2, mas=17.0)
 ```
 
+**One player, one match: [FR](docs/example_player_report_fr.pdf) · [EN](docs/example_player_report_en.pdf)** —
+three pages where every number is set against the team-mates (rank, median, range) and the game context:
+profile chart, minute-by-minute intensity with possession, halves, sprints on the pitch with their context,
+peak demands and training targets, movement signature, leads for the week.
+
+```python
+from peakdemands.report.player import player_report
+player_report(load_metrica_match(), "Player5", "player5.pdf")
+```
+
 **Full match report for physical preparation: [EN](docs/example_match_report_en.pdf) ·
 [FR](docs/example_match_report_fr.pdf)** — a whole team over a real professional match (open optical tracking +
 event data). **Single-player session report: [EN](docs/example_match_en.pdf) · [FR](docs/example_match_fr.pdf).**

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+{% macro titre(n, txt) %}<div class="titre-section">{{ outlined_number(n) | safe }}<span class="triangle"></span><h2>{{ txt }}</h2><span class="filet"></span></div>{% endmacro %}
+
+<section>
+  {{ titre(1, "L'essentiel" if fr else "Key points") }}
+  <div class="chiffres">{% for c in tiles %}<div class="chiffre{% if c.accent %} accent{% endif %}"><div class="val">{{ c.val }}{% if c.unit %}<small>{{ c.unit }}</small>{% endif %}</div><div class="lab">{{ c.lab }}</div><div class="sub">{{ c.sub }}</div></div>{% endfor %}</div>
+  <div class="encadre"><div class="etiquette">{{ "Lecture" if fr else "Reading" }}</div>{% for line in reading %}<p>{{ line | safe }}</p>{% endfor %}</div>
+  <h3><span class="badge">1.1</span>{{ "Son profil face à l'équipe" if fr else "His profile against the team" }}</h3>
+  <figure><img src="{{ fig_profile }}" alt=""><figcaption>{{ ("Point rouge : " ~ who ~ " ; trait gris : médiane de l'équipe ; barre : du plus bas au plus haut des joueurs de champ (≥ 45 min). Rang : 1 = valeur la plus haute.") if fr else ("Red dot: " ~ who ~ "; grey tick: team median; bar: lowest to highest outfield player (≥ 45 min). Rank: 1 = highest value.") }}</figcaption></figure>
+</section>
+
+<section class="saut">
+  {{ titre(2, "Son match minute par minute" if fr else "His match minute by minute") }}
+  <figure><img src="{{ fig_time }}" alt=""><figcaption>{{ "Distance par minute (moyenne glissante sur 3 min) du joueur et de l'équipe ; traits rouges : sprints ; tirets : buts (or pour, rouge contre). Bande du bas : avec ballon (bleu), sans ballon (rouge), ballon mort (gris)." if fr else "Distance per minute (3-min rolling average), player and team; red ticks: sprints; dashes: goals (gold for, red against). Bottom strip: in possession (blue), out of possession (red), ball dead (grey)." }}</figcaption></figure>
+  <table class="mise"><tr><td class="d" style="padding-right:4mm">
+    <h3><span class="badge">2.1</span>{{ "Selon le contexte de jeu" if fr else "By game context" }}</h3>
+    <table>
+      <tr><th></th><th class="num">min</th><th class="num">m/min</th><th class="num">{{ "équipe" if fr else "team" }}</th><th class="num">HSR/min</th><th class="num">{{ "équipe" if fr else "team" }}</th><th class="num">W/kg</th></tr>
+      {% for r in context %}<tr>{% for c in r %}<td{% if not loop.first %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+    </table>
+  </td><td class="d">
+    <h3><span class="badge">2.2</span>{{ "Entre les mi-temps" if fr else "Between halves" }}</h3>
+    <table>
+      <tr><th></th><th class="num">{{ "1re MT" if fr else "1st half" }}</th><th class="num">{{ "2e MT" if fr else "2nd half" }}</th><th class="num">{{ "Écart" if fr else "Change" }}</th></tr>
+      {% for r in halves %}<tr>{% for c in r %}<td{% if not loop.first %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+    </table>
+  </td></tr></table>
+</section>
+
+<section>
+  {{ titre(3, "Ses sprints et sa zone d'action" if fr else "His sprints and his area") }}
+  <table class="mise"><tr><td class="g" style="width:80mm"><figure><img src="{{ fig_pitch }}" alt=""><figcaption>{{ "Occupation du terrain (bleu) et sprints (flèches) ; équipe attaquant vers la droite." if fr else "Pitch occupation (blue) and sprints (arrows); team attacking to the right." }}</figcaption></figure></td><td class="d">
+    <table>
+      <tr><th>min</th><th class="num">{{ "Durée" if fr else "Duration" }}</th><th class="num">V max</th><th class="num">{{ "V entrée" if fr else "Entry v" }}</th><th class="num">m</th><th>{{ "Contexte" if fr else "Context" }}</th></tr>
+      {% for r in sprints %}<tr>{% for c in r %}<td{% if 0 < loop.index0 < 5 %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+    </table>
+  </td></tr></table>
+</section>
+
+<section class="saut">
+  {{ titre(4, "Ses demandes de pointe" if fr else "His peak demands") }}
+  <table class="mise"><tr><td class="g" style="width:72mm"><figure><img src="{{ fig_mds }}" alt=""><figcaption>{{ "Pic de distance par minute selon la durée, face à l'équipe." if fr else "Peak distance per minute by duration, against the team." }}</figcaption></figure></td><td class="d">
+    <table>
+      <tr><th>{{ "Fenêtre" if fr else "Window" }}</th><th class="num">{{ who }}</th><th class="num">{{ "Médiane équipe" if fr else "Team median" }}</th><th class="num">{{ "Rang" if fr else "Rank" }}</th></tr>
+      {% for r in peaks %}<tr>{% for c in r %}<td{% if not loop.first %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+    </table>
+    <h3><span class="badge">4.1</span>{{ "Cibles d'entraînement tirées de son match" if fr else "Training targets from his match" }}</h3>
+    <table>
+      <tr><th>{{ "Bloc" if fr else "Block" }}</th><th class="num">{{ "Son pic" if fr else "His peak" }}</th><th class="num">80 %</th><th class="num">90 %</th></tr>
+      {% for r in peak_target %}<tr>{% for c in r %}<td{% if not loop.first %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+    </table>
+    <p class="mention" style="border:0;margin:0;padding:0">{{ "m/min à viser sur un exercice de même durée pour reproduire 80 à 90 % de son pic de match." if fr else "m/min to aim for in a drill of the same length to reproduce 80–90 % of his match peak." }}</p>
+  </td></tr></table>
+</section>
+
+<section>
+  {{ titre(5, "Sa charge mécanique" if fr else "His mechanical load") }}
+  <table class="mise"><tr><td class="g" style="width:62mm"><figure><img src="{{ fig_rose }}" alt=""><figcaption>{{ "Signature de mouvement : travail selon l'orientation de l'accélération." if fr else "Movement signature: work by orientation of the acceleration." }}</figcaption></figure></td><td class="d">
+    <table>
+      <tr><th>{{ "Manœuvre" if fr else "Manoeuvre" }}</th><th class="num">{{ "Nombre" if fr else "Count" }}</th><th class="num">{{ "Part du travail" if fr else "Share of work" }}</th><th class="num">{{ "dont à gauche" if fr else "of which left" }}</th></tr>
+      {% for r in families %}<tr>{% for c in r %}<td{% if not loop.first %} class="num"{% endif %}>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+    </table>
+    <p class="mention" style="border:0;margin:0;padding:0">{{ "Équilibre gauche/droite des virages : " if fr else "Left/right turning balance: " }}{{ lr }} % ({{ "positif = plus à gauche" if fr else "positive = more to the left" }}).</p>
+  </td></tr></table>
+</section>
+
+<section>
+  {{ titre(6, "Pistes pour la semaine" if fr else "Leads for the week") }}
+  {% if leads %}<table>{% for k, txt in leads %}<tr><td style="width:26mm"><span class="pastille attention">{{ k }}</span></td><td>{{ txt | safe }}</td></tr>{% endfor %}</table>
+  {% else %}<p>{{ "Rien à signaler : charge dans la norme de l'équipe." if fr else "Nothing to flag: load within the team's range." }}</p>{% endif %}
+</section>
+
+<section>
+  {{ titre(7, "Méthode" if fr else "Method") }}
+  <div class="methode" style="columns:1">{% for p in method %}<p>{{ p | safe }}</p>{% endfor %}<p>{{ "Données :" if fr else "Data:" }} {{ source }}.</p></div>
+</section>
+{% endblock %}
