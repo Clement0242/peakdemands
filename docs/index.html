@@ -30,9 +30,9 @@
     <a class="bouton creux" href="example_match_en.pdf">Example report</a>
   </div>
   <div class="chiffres">
-    <div><b>13</b><span>papers behind the definitions, from Spencer 2004 to GPS 3.0 (2026)</span></div>
-    <div><b>53 %</b><span>of a midfielder's acceleration comes from turning, invisible to speed-only metrics</span></div>
-    <div><b>10</b><span>tests on known ground truths, on every push</span></div>
+    <div><b>15</b><span>papers behind the definitions, from Cavagna 1976 to GPS 3.0 (2026)</span></div>
+    <div><b>24 %</b><span>of a midfielder's mechanical work comes from turning, invisible to speed-only metrics</span></div>
+    <div><b>20</b><span>tests on known ground truths, on every push</span></div>
     <div><b>2</b><span>dependencies: NumPy and SciPy (the report is optional)</span></div>
   </div>
 </div></div>
@@ -78,9 +78,25 @@ session_report(kin, "match.pdf", mss=9.2, mas=17.0)</code></pre>
   than distance in zones. Implemented as published: the complete acceleration, Bundle's speed-duration model with the
   Estimated Maximal S1min and MP1min equations, the intensity exposure time (IET) over 60-s rolling windows and its weekly
   sum (WIET).</p></div>
-  <div class="constat"><p>The paper's mechanical work is not reproduced.</p>
-  <p>It comes from a proprietary analyser whose algorithm is not published. The package offers open, documented proxies
-  (speed × complete acceleration, the directional share) and says plainly that their values are not comparable.</p></div>
+  <h3>Direction in the mechanical load, from published physics</h3>
+  <div class="prose"><p>The paper's analyser is proprietary, so the mechanical load is rebuilt in the open. Speed-change work
+  is the change in kinetic energy of the centre of mass summed in absolute value (Gray et al. 2018). Direction-change work
+  counts kinetic energy along and across the heading at the start of each manoeuvre (Cavagna et al. 1976): a turn moves
+  energy from one axis to the other, absorbed in the old direction, produced in the new one. Every manoeuvre is classified
+  (acceleration, braking, turn, curved acceleration or braking, left or right) into a movement signature.</p></div>
+  <div class="tableau"><table>
+    <thead><tr><th>Movement at 5 m/s</th><th>Speed work</th><th>Direction work</th></tr></thead>
+    <tbody>
+      <tr><td>Straight acceleration 0 → 8 m/s</td><td>32 J/kg</td><td>0</td></tr>
+      <tr><td>Stop-and-go 180° cut</td><td>25 J/kg</td><td>0</td></tr>
+      <tr><td>90° turn at constant speed</td><td>0</td><td>25 J/kg</td></tr>
+      <tr><td>U-turn on a curve at constant speed</td><td>0</td><td>50 J/kg</td></tr>
+    </tbody>
+  </table></div>
+  <div class="constat"><p>An open model, not ADI.</p>
+  <p>On the open match the direction part is 24 % of the horizontal work (30 % within manoeuvres), close to the third
+  Gray reports. The numbers belong to this model: they are not comparable with ADI watts, and the model is horizontal and
+  centre-of-mass only.</p></div>
 </div></section>
 
 <section id="tests"><div class="enveloppe">

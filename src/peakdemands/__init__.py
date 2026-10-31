@@ -10,10 +10,11 @@ from tracking data (GPS, LPS, optical).
 
 from .datasets import load_metrica, simulate_session
 from .efforts import (Effort, Sequence, accelerations, decelerations, detect, near_mss_exposures,
-                      repeated_sequences, repeated_sprint_bouts, sprints, turns)
+                      mechanical_bursts, repeated_sequences, repeated_sprint_bouts, sprints, turns)
 from .gps3 import (bundle_mean_speed, bundle_speed, directional_share, estimated_max_mp1min,
                    estimated_max_s1min, intensity_exposure_time, velocity_change_power, weekly_iet)
 from .kinematics import Kinematics, from_positions, from_speed
+from .mechanics import FAMILIES, Manoeuvre, MechanicalWork, backlash, mechanical_work
 from .mds import DURATIONS, PeakCurve, peak_curve, rolling_mean
 
 __version__ = "0.1.0"

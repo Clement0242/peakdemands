@@ -29,6 +29,8 @@ class Kinematics:
     a_tangential: np.ndarray  # m/s², signed (+ accelerating, − braking)
     a_centripetal: np.ndarray  # m/s², ≥ 0; NaN when only speed is known
     fs: float
+    a_normal: np.ndarray | None = None  # signed centripetal: + turning left, − turning right
+    heading: np.ndarray | None = None   # rad, direction of travel
 
     @property
     def a_complete(self) -> np.ndarray:
@@ -120,16 +122,18 @@ def from_positions(time: ArrayLike, x: ArrayLike, y: ArrayLike, *, fs: float | N
     v = np.hypot(vx, vy)
     with np.errstate(invalid="ignore", divide="ignore"):
         a_t = (vx * ax + vy * ay) / v             # projection on the direction of travel
-        a_c = np.abs(vx * ay - vy * ax) / v       # perpendicular part = v²·curvature
+        a_n = (vx * ay - vy * ax) / v             # perpendicular part = v²·curvature, signed
     slow = v < 0.3                                 # direction is meaningless when standing
-    a_t[slow] = np.nan_to_num(a_t[slow]); a_c[slow] = 0.0
+    a_t[slow] = np.nan_to_num(a_t[slow]); a_n[slow] = 0.0
+    a_c = np.abs(a_n)
+    heading = np.arctan2(vy, vx)
     bad = (v > max_speed) | (np.hypot(a_t, a_c) > max_acc)
-    for arr in (v, a_t, a_c):
+    for arr in (v, a_t, a_c, a_n, heading):
         arr[bad] = np.nan
     for a, b in _segments(np.isfinite(v)):          # islands left between errors
         if b - a < w:
-            v[a:b] = a_t[a:b] = a_c[a:b] = np.nan
-    return Kinematics(grid - grid[0], v, a_t, a_c, fs)
+            v[a:b] = a_t[a:b] = a_c[a:b] = a_n[a:b] = heading[a:b] = np.nan
+    return Kinematics(grid - grid[0], v, a_t, a_c, fs, a_n, heading)
 
 
 def from_speed(time: ArrayLike, speed: ArrayLike, *, fs: float | None = None,

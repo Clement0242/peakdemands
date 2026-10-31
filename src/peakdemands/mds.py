@@ -36,9 +36,12 @@ def _rate(kin: Kinematics, metric: str, hsr: float, acc: float) -> tuple[np.ndar
         starts = np.diff(np.concatenate(([0], a.astype(int)))) == 1
         return starts.astype(float) * kin.fs * 60, "efforts/min"
     if metric == "power":
-        from .gps3 import velocity_change_power
-        return np.nan_to_num(velocity_change_power(kin)), "W/kg"
-    raise ValueError("metric must be 'distance', 'hsr', 'accdec' or 'power'")
+        from .mechanics import mechanical_work
+        return np.nan_to_num(mechanical_work(kin).power), "W/kg"
+    if metric == "power_direction":
+        from .mechanics import mechanical_work
+        return np.nan_to_num(mechanical_work(kin).p_direction), "W/kg"
+    raise ValueError("metric must be 'distance', 'hsr', 'accdec', 'power' or 'power_direction'")
 
 
 def rolling_mean(x: np.ndarray, n: int) -> np.ndarray:
@@ -85,7 +88,8 @@ def peak_curve(kin: Kinematics, metric: str = "distance", durations=DURATIONS, *
 
     ``metric``: "distance" (m/min), "hsr" (m/min above ``hsr`` m/s),
     "accdec" (accelerations + decelerations above ``acc`` m/s² started per
-    minute) or "power" (velocity-change power, see :mod:`peakdemands.gps3`).
+    minute), "power" (speed- + direction-change mechanical power, W/kg) or
+    "power_direction" (its direction part; see :mod:`peakdemands.mechanics`).
     """
     x, unit = _rate(kin, metric, hsr, acc)
     valid = np.isfinite(kin.speed)

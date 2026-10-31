@@ -28,8 +28,8 @@
   </div>
   <div>
       <table>
-        <tr><th>{{ L.duration }}</th><th class="num">m/min</th><th class="num">HSR</th><th class="num">acc+dec</th><th class="num">{{ L.fixed }}</th><th class="num">{{ L.at }}</th><th class="num">{{ L.following }}</th><th class="num">≥ 90 %</th></tr>
-        {% for r in mds_rows %}<tr><td>{{ r[0] }}</td><td class="num">{{ r[1] }}</td><td class="num">{{ r[2] }}</td><td class="num">{{ r[3] }}</td><td class="num">−{{ r[4] }}</td><td class="num">{{ r[5] }}</td><td class="num">{{ r[6] }}</td><td class="num">{{ r[7] }}</td></tr>{% endfor %}
+        <tr><th>{{ L.duration }}</th><th class="num">m/min</th><th class="num">HSR</th><th class="num">acc+dec</th><th class="num">W/kg</th><th class="num">{{ L.fixed }}</th><th class="num">{{ L.at }}</th><th class="num">{{ L.following }}</th><th class="num">≥ 90 %</th></tr>
+        {% for r in mds_rows %}<tr><td>{{ r[0] }}</td><td class="num">{{ r[1] }}</td><td class="num">{{ r[2] }}</td><td class="num">{{ r[3] }}</td><td class="num">{{ r[4] }}</td><td class="num">−{{ r[5] }}</td><td class="num">{{ r[6] }}</td><td class="num">{{ r[7] }}</td><td class="num">{{ r[8] }}</td></tr>{% endfor %}
       </table>
       <p class="mention" style="border:0;margin-top:0;padding-top:0">{{ L.mds_legend }}</p>
   </div>
@@ -64,13 +64,37 @@
   </div>
 </section>
 
+
+{% if mech %}
+<section class="saut">
+  {{ titre(5, L.mech) }}
+  <div class="chiffres">
+    {% for c in mech.tiles %}
+    <div class="chiffre{% if c.accent %} accent{% endif %}"><div class="val">{{ c.val }}{% if c.unit %}<small>{{ c.unit }}</small>{% endif %}</div><div class="lab">{{ c.lab }}</div><div class="sub">{{ c.sub }}</div></div>
+    {% endfor %}
+  </div>
+  <div class="deux">
+    <figure><img src="{{ fig_rose }}" alt=""><figcaption>{{ L.cap_rose }}</figcaption></figure>
+    <div>
+      <table>
+        <tr><th>{{ L.family }}</th><th class="num">{{ L.count }}</th><th class="num">{{ L.work }}</th><th class="num">{{ L.w_dir }}</th></tr>
+        {% for r in mech.rows %}<tr><td>{{ r[0] }}</td><td class="num">{{ r[1] }}</td><td class="num">{{ r[2] }}</td><td class="num">{{ r[3] }}</td></tr>{% endfor %}
+      </table>
+      <table>
+        <tr><th>IET · {{ L.mp1 }} ({{ mech.ref }} W/kg)</th><th class="num">≥ 60 %</th><th class="num">≥ 70 %</th><th class="num">≥ 80 %</th></tr>
+        <tr><td>{{ L.minutes }}</td>{% for k, v in mech.iet.items() %}<td class="num">{{ v | fmt(1) }}</td>{% endfor %}</tr>
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
 <section>
-  {{ titre(5, L.gps3) }}
+  {{ titre(6 if mech else 5, L.gps3) }}
   <div class="deux">
     {% if fig_dir %}<figure><img src="{{ fig_dir }}" alt=""><figcaption>{{ L.cap_dir }}</figcaption></figure>{% endif %}
     <div>
-      {% if share %}<div class="chiffres"><div class="chiffre accent"><div class="val">{{ share }}</div><div class="lab">{{ L.dir_share }}</div><div class="sub">a<sub>c</sub>² / |a|², |a| ≥ 1 m/s²</div></div></div>{% endif %}
-      <h3><span class="badge">5.1</span>{{ L.iet }}</h3>
+      {% if share and not mech %}<div class="chiffres"><div class="chiffre accent"><div class="val">{{ share }}</div><div class="lab">{{ L.dir_share }}</div><div class="sub">a<sub>c</sub>² / |a|², |a| ≥ 1 m/s²</div></div></div>{% endif %}
+      <h3><span class="badge">{{ 6 if mech else 5 }}.1</span>{{ L.iet }}</h3>
       <table>
         <tr><th>{{ L.ref }}</th><th class="num">≥ 60 %</th><th class="num">≥ 70 %</th><th class="num">≥ 80 %</th></tr>
         <tr><td>{{ L.peak1 }} ({{ peak1 }} m/min)</td>{% for k, v in iet_match.items() %}<td class="num">{{ v | fmt(1) }} min</td>{% endfor %}</tr>
@@ -82,7 +106,7 @@
 </section>
 
 <section>
-  {{ titre(6, L.method) }}
+  {{ titre(7 if mech else 6, L.method) }}
   <div class="methode">{% for p in method %}<p>{{ p | safe }}</p>{% endfor %}</div>
   {% if source %}<p class="mention" style="border:0">{{ L.data }} {{ source }}.</p>{% endif %}
   <ul class="refs">{% for r in references %}<li>{{ r }}</li>{% endfor %}</ul>

@@ -105,6 +105,13 @@ def turns(kin: Kinematics, threshold: float = 2.5, *, min_duration: float = 0.5)
     return detect(kin, kin.a_centripetal, threshold, min_duration=min_duration, merge_gap=0.2, kind="turn")
 
 
+def mechanical_bursts(kin: Kinematics, power: np.ndarray, threshold: float, *,
+                      min_duration: float = 0.5) -> list[Effort]:
+    """Bursts of mechanical power (speed + direction change, see :mod:`peakdemands.mechanics`)
+    above ``threshold`` W/kg for ``min_duration`` s: accelerations, brakes and cuts alike."""
+    return detect(kin, power, threshold, min_duration=min_duration, merge_gap=0.2, kind="mechanical")
+
+
 @dataclass
 class Sequence:
     efforts: list[Effort]

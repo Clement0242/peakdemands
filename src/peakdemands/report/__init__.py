@@ -17,6 +17,7 @@ import numpy as np
 from .. import __version__
 from .. import efforts as E
 from .. import gps3, mds
+from ..mechanics import FAMILIES, mechanical_work
 from ..kinematics import Kinematics
 from .engine import PALETTE, fig_to_uri, fmt, mpl_theme, render_pdf
 
@@ -43,7 +44,14 @@ L = {
                mds_legend="m/min : distance ; HSR : m/min au-dessus du seuil ; acc+dec : efforts par minute ; Fixe : "
                           "sous-estimation par périodes fixes ; Début : moment du pic (min:s) ; ≥ 90 % : passages distincts "
                           "à 90 % du pic.",
-               mp_note="repère du papier pour une puissance mécanique non reproduite ici."),
+               mp_note="repère du papier pour une puissance mécanique non reproduite ici.",
+               mech="Charge mécanique directionnelle", w_tot="Travail horizontal", w_dir="Part directionnelle",
+               mp1="Puissance pic 1 min", mbursts="Bursts mécaniques", family="Manœuvre", work="Travail",
+               fam_names={"acceleration": "Accélération", "deceleration": "Décélération", "turn": "Virage",
+                          "curved acceleration": "Accélération en courbe", "curved deceleration": "Freinage en courbe"},
+               left="gauche", right="droite",
+               cap_rose="Signature de mouvement : travail mécanique selon l'orientation de l'accélération (haut : "
+                        "accélérer, bas : freiner, côtés : tourner à gauche / à droite)."),
     "en": dict(title="Peak demands", title_html="Peak <em>demands</em>",
                kicker="Tracking · efforts and most demanding scenarios", summary="Summary", reading="Reading",
                mds="Most demanding scenarios", timeline="The match minute by minute", bursts="Efforts",
@@ -64,10 +72,21 @@ L = {
                mds_legend="m/min: distance; HSR: m/min above the threshold; acc+dec: efforts per minute; Fixed: "
                           "underestimation by fixed epochs; Start: time of the peak (min:s); ≥ 90 %: distinct passages "
                           "at 90 % of the peak.",
-               mp_note="the paper's reference for a mechanical power not reproduced here."),
+               mp_note="the paper's reference for a mechanical power not reproduced here.",
+               mech="Direction-sensitive mechanical load", w_tot="Horizontal work", w_dir="Directional share",
+               mp1="Peak 1-min power", mbursts="Mechanical bursts", family="Manoeuvre", work="Work",
+               fam_names={"acceleration": "Acceleration", "deceleration": "Deceleration", "turn": "Turn",
+                          "curved acceleration": "Curved acceleration", "curved deceleration": "Curved braking"},
+               left="left", right="right",
+               cap_rose="Movement signature: mechanical work by orientation of the acceleration (top: speeding up, "
+                        "bottom: braking, sides: turning left / right)."),
 }
 
 REFERENCES = [
+    "Gray A.J., Shorter K., Cummins C., Murphy A. & Waldron M. (2018). Modelling movement energetics using Global "
+    "Positioning System devices in contact team sports: limitations and solutions. Sports Med 48, 1357–1368.",
+    "Cavagna G.A., Thys H. & Zamboni A. (1976). The sources of external work in level walking and running. "
+    "J Physiol 262, 639–657.",
     "Buchheit M., Lopez Sagarra A., Boskovic A., Komino P., Norman D. & Hader K. (2026). GPS 3.0: from distance into "
     "zones toward better proxies of internal neuromuscular load in elite football. Sport Perf Sci Rep 280.",
     "Buchheit M. & Simpson B.M. (2017). Player-tracking technology: half-full or half-empty glass? Int J Sports "
@@ -109,7 +128,7 @@ def _mmss(s: float) -> str:
     return f"{s // 60}:{s % 60:02d}"
 
 
-def _figures(kin, curves, spr, lang, T):
+def _figures(kin, curves, spr, lang, T, mw=None):
     import matplotlib.pyplot as plt
 
     mpl_theme()
@@ -142,7 +161,29 @@ def _figures(kin, curves, spr, lang, T):
     ax.set(xlabel="min", ylabel="m/min", xlim=(0, tm[-1]))
     out["fig_tl"] = fig_to_uri(fig)
 
-    if kin.has_direction:
+    if mw is not None and kin.a_normal is not None:
+        import matplotlib.pyplot as plt  # noqa: F811
+        psi = np.arctan2(np.nan_to_num(kin.a_normal), np.nan_to_num(kin.a_tangential))
+        w = np.nan_to_num(mw.power) / kin.fs
+        bins = np.linspace(-np.pi, np.pi, 17)
+        h, _ = np.histogram(psi, bins=bins, weights=w)
+        fig = plt.figure(figsize=(3.4, 3.0))
+        ax = fig.add_subplot(projection="polar")
+        ax.set_theta_zero_location("N")
+        ax.set_theta_direction(1)            # counter-clockwise: left turns on the left
+        cen = (bins[:-1] + bins[1:]) / 2
+        cols = [P["navy"] if abs(c) < np.pi / 4 or abs(c) > 3 * np.pi / 4 else P["red"] for c in cen]
+        bars = ax.bar(cen, h / h.sum() * 100, width=2 * np.pi / 16 * 0.92, color=cols, alpha=.85)
+        for b in bars:                       # WeasyPrint mis-renders the polar clip path
+            b.set_clip_on(False)
+        ax.set_xticks([0, np.pi / 2, np.pi, -np.pi / 2],
+                      ["accél." if lang == "fr" else "accel.", T["left"], "frein" if lang == "fr" else "brake", T["right"]])
+        ax.set_yticklabels([])
+        ax.grid(False)
+        ax.spines["polar"].set_visible(False)
+        out["fig_rose"] = fig_to_uri(fig)
+
+    if kin.has_direction and mw is None:
         a = kin.a_complete
         m = (a >= 1) & np.isfinite(a)
         idx = np.flatnonzero(m)
@@ -183,8 +224,9 @@ def session_report(kin: Kinematics, out: str | Path, *, athlete: str | None = No
     trn = E.turns(kin, acc_threshold)
     rss = E.repeated_sequences(hsr)
     rsb = E.repeated_sprint_bouts(hsr)
-    curves = {m: mds.peak_curve(kin, m, durations, hsr=hsr_threshold, acc=acc_threshold)
-              for m in ("distance", "hsr", "accdec")}
+    metrics = ("distance", "hsr", "accdec") + (("power",) if kin.has_direction else ())
+    curves = {m: mds.peak_curve(kin, m, durations, hsr=hsr_threshold, acc=acc_threshold) for m in metrics}
+    mw = mechanical_work(kin) if kin.has_direction else None
     c = curves["distance"]
     cpl, npl, r2 = c.power_law()
     minutes = kin.duration / 60
@@ -201,7 +243,9 @@ def session_report(kin: Kinematics, out: str | Path, *, athlete: str | None = No
     mds_rows = []
     for k, d in enumerate(c.durations):
         mds_rows.append([_dlabel(d), f(c.peak[k]), f(curves['hsr'].peak[k]),
-                         f(curves['accdec'].peak[k], 1), f(c.fixed_underestimation_pct[k], 1) + " %",
+                         f(curves['accdec'].peak[k], 1),
+                         f(curves['power'].peak[k], 2) if mw is not None else "—",
+                         f(c.fixed_underestimation_pct[k], 1) + " %",
                          _mmss(c.peak_start[k]), f(c.following[k]), str(c.near_peak.get(float(d), 0))])
     bursts = [[_mmss(e.start), f(e.duration, 1) + " s", f(e.max_speed, 2), f(e.entry_speed, 2), f(e.distance)]
               for e in sorted(spr, key=lambda e: -e.max_speed)[:10]]
@@ -217,6 +261,39 @@ def session_report(kin: Kinematics, out: str | Path, *, athlete: str | None = No
         ref_txt = f"Estimated Maximal S1min = {f(s1, 1)} km/h ({f(s1 / 3.6 * 60)} m/min)"
         mp_est = gps3.estimated_max_mp1min(mas, mss * 3.6)
     iet_match = gps3.intensity_exposure_time(kin, np.nan_to_num(kin.speed) * 60, c.peak[i1])
+    mech = None
+    if mw is not None:
+        cp = curves["power"]
+        mp1 = cp.peak[i1]
+        bursts_m = E.mechanical_bursts(kin, mw.power, 0.5 * np.nanmax(mds.rolling_mean(np.nan_to_num(mw.power), max(1, int(kin.fs)))))
+        fam = {}
+        for m_ in mw.manoeuvres:
+            key = (m_.family, m_.side)
+            d_ = fam.setdefault(key, [0, 0.0, 0.0])
+            d_[0] += 1; d_[1] += m_.work; d_[2] += m_.w_direction
+        tot_w = sum(v[1] for v in fam.values()) or 1
+        rows = []
+        for fam_name in FAMILIES:
+            for side in ("", "left", "right"):
+                if (fam_name, side) in fam:
+                    n_, w_, wd_ = fam[(fam_name, side)]
+                    rows.append([T["fam_names"][fam_name] + (f" ({T[side]})" if side else ""), str(n_),
+                                 f(w_ / tot_w * 100) + " %", f(wd_ / w_ * 100 if w_ else 0) + " %"])
+        mech = {
+            "tiles": [
+                {"val": f(mw.w_total / 1000, 2), "unit": "kJ/kg", "lab": T["w_tot"],
+                 "sub": f"{f(mw.w_total / minutes, 1)} J/kg/min", "accent": True},
+                {"val": f(mw.direction_share * 100), "unit": "%", "lab": T["w_dir"],
+                 "sub": f"{f(mw.w_direction / max(sum(m_.work for m_ in mw.manoeuvres), 1e-9) * 100)} % "
+                        + ("dans les manœuvres" if lang == "fr" else "within manoeuvres")},
+                {"val": f(mp1, 2), "unit": "W/kg", "lab": T["mp1"], "sub": f"{T['at'].lower()} {_mmss(cp.peak_start[i1])}"},
+                {"val": str(len(bursts_m)), "unit": "", "lab": T["mbursts"],
+                 "sub": "≥ 50 % " + ("du pic 1 s" if lang == "fr" else "of the 1-s peak")},
+            ],
+            "rows": rows,
+            "iet": gps3.intensity_exposure_time(kin, np.nan_to_num(mw.power), mp1),
+            "ref": f(mp1, 2),
+        }
     share = gps3.directional_share(kin)
     reading = []
     if lang == "fr":
@@ -232,9 +309,10 @@ def session_report(kin: Kinematics, out: str | Path, *, athlete: str | None = No
             reading.append(f"{len(rss)} séquences d'efforts à haute vitesse répétés (≤ 60 s de récupération), la plus "
                            f"longue de {max(s.count for s in rss)} efforts ; {len(rsb)} répondent au critère plus strict de "
                            f"Spencer (≥ 3, récupération moyenne < 21 s).")
-        if np.isfinite(share):
-            reading.append(f"Changements de direction : <b>{f(share * 100)} %</b> de l'accélération totale vient des virages "
-                           f"plutôt que des variations de vitesse — une part que les métriques GPS classiques ignorent.")
+        if mw is not None:
+            reading.append(f"Changements de direction : <b>{f(mw.direction_share * 100)} %</b> du travail mécanique horizontal "
+                           f"vient des virages et non des variations de vitesse — une part que les métriques GPS classiques "
+                           f"ignorent (modèle ouvert, section 6).")
     else:
         reading.append(f"{f(total)} m in {f(minutes)} min ({f(total / minutes)} m/min), of which {f(hsr_d)} m above "
                        f"{f(hsr_threshold, 1)} m/s and <b>{len(spr)} sprints</b>.")
@@ -248,9 +326,10 @@ def session_report(kin: Kinematics, out: str | Path, *, athlete: str | None = No
             reading.append(f"{len(rss)} sequences of repeated high-speed efforts (≤ 60 s recovery), the longest with "
                            f"{max(s.count for s in rss)} efforts; {len(rsb)} meet Spencer's stricter criterion (≥ 3, mean "
                            f"recovery < 21 s).")
-        if np.isfinite(share):
-            reading.append(f"Direction changes: <b>{f(share * 100)} %</b> of the total acceleration comes from turning rather "
-                           f"than from speed changes — a part that classic GPS metrics ignore.")
+        if mw is not None:
+            reading.append(f"Direction changes: <b>{f(mw.direction_share * 100)} %</b> of the horizontal mechanical work comes "
+                           f"from turning rather than from speed changes — a part classic GPS metrics ignore (open model, "
+                           f"section 6).")
     fx = c.fixed_underestimation_pct
     ratio = c.peak / c.session_mean
     if lang == "fr":
@@ -278,7 +357,13 @@ def session_report(kin: Kinematics, out: str | Path, *, athlete: str | None = No
             "GPS 3.0 (Buchheit et al. 2026) : temps d'exposition (IET) = minutes où la moyenne glissante sur 60 s dépasse "
             "60, 70 ou 80 % d'une référence — le pic de 1 min du match, et si VMA et VMS sont connues, la vitesse maximale "
             "sur 1 min du modèle de Bundle (VMA + 0,695·(VMS − VMA)). Le travail mécanique du papier vient d'un "
-            "analyseur propriétaire non publié : il n'est pas reproduit ici."],
+            "analyseur propriétaire non publié : il n'est pas reproduit ici.",
+            "Travail directionnel (modèle ouvert) : le travail lié à la vitesse est la somme absolue des variations "
+            "d'énergie cinétique du centre de masse (Gray et al. 2018), après un filtre à hystérésis de 0,2 m/s qui écarte "
+            "le bruit du tracking. Le travail lié à la direction compte l'énergie cinétique le long et en travers du cap "
+            "d'entrée de chaque manœuvre (comptabilité par axe, Cavagna et al. 1976) : un virage de 90° à la vitesse v "
+            "coûte v² par kg, un arrêt-relance seulement du travail de vitesse. Horizontal, centre de masse seul ; non "
+            "comparable aux watts d'ADI."],
         "en": [
             "Positions smoothed and differentiated with a Savitzky-Golay filter (0.6-s window); tracking jumps removed. "
             "The complete acceleration is split into a tangential (speed change) and a centripetal (turning) "
@@ -293,14 +378,19 @@ def session_report(kin: Kinematics, out: str | Path, *, athlete: str | None = No
             "GPS 3.0 (Buchheit et al. 2026): intensity exposure time (IET) = minutes during which the 60-s rolling "
             "average exceeds 60, 70 or 80 % of a reference — the match peak minute and, when MAS and MSS are known, "
             "Bundle's maximal 1-min speed (MAS + 0.695·(MSS − MAS)). The paper's mechanical work comes from a "
-            "proprietary analyser that is not published: it is not reproduced here."],
+            "proprietary analyser that is not published: it is not reproduced here.",
+            "Direction-sensitive work (open model): speed-change work is the absolute sum of the changes in kinetic "
+            "energy of the centre of mass (Gray et al. 2018), after a 0.2 m/s hysteresis filter that keeps tracking noise "
+            "out. Direction-change work counts kinetic energy along and across the heading at the start of each "
+            "manoeuvre (per-axis accounting, Cavagna et al. 1976): a 90° turn at speed v costs v² per kg, a stop-and-go "
+            "cut only speed work. Horizontal, centre of mass only; not comparable with ADI watts."],
     }[lang]
     ctx = {
         "lang": lang, "L": T, "title": T["title"], "title_html": T["title_html"], "kicker": T["kicker"],
         "athlete": athlete, "test": session, "test_date": session_date,
         "extra_meta": ({("VMS" if lang == "fr" else "MSS"): f"{f(mss, 2)} m/s"} if mss else {}),
         "organisation": organisation, "logo": logo, "tool": "peakdemands", "version": __version__,
-        "tiles": tiles, "reading": reading, "mds_notes": mds_notes, "mds_rows": mds_rows, "bursts": bursts, "seqs": seqs, "near": near,
+        "tiles": tiles, "reading": reading, "mds_notes": mds_notes, "mech": mech, "mds_rows": mds_rows, "bursts": bursts, "seqs": seqs, "near": near,
         "counts": [(T["sprints"], len(spr)), ("> " + f(hsr_threshold, 1) + " m/s", len(hsr)), (T["accs"], len(acc)),
                    (T["decs"], len(dec)), (T["turns"], len(trn) if kin.has_direction else "—"),
                    (T["rss"], len(rss)), ("Spencer", len(rsb))],
@@ -310,7 +400,7 @@ def session_report(kin: Kinematics, out: str | Path, *, athlete: str | None = No
         "source": source,
         "disclaimer": ("Seuils et fenêtres sont des paramètres : les comparaisons ne valent qu'à méthode égale."
                        if lang == "fr" else "Thresholds and windows are parameters: compare only at equal method."),
-        **_figures(kin, curves, spr, lang, T),
+        **_figures(kin, curves, spr, lang, T, mw),
     }
     return render_pdf(TEMPLATES, "session.html", ctx, out)
 

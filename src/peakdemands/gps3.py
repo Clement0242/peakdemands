@@ -17,11 +17,11 @@ published as a formula is implemented as such:
 
 The paper's mechanical work and power come from a proprietary analyser
 (ADI, Hudl) that is not published. This package does **not** reproduce it:
-:func:`velocity_change_power` is an open, documented proxy (speed × the
-magnitude of the complete acceleration vector) that shows the same thing —
-how much of the effort comes from turning rather than from speed changes —
-but its values are not ADI watts and must not be compared with them, nor
-with Estimated Maximal MP1min.
+:mod:`peakdemands.mechanics` builds an open model of speed- and
+direction-change work from published physics (Gray et al. 2018; Cavagna et
+al. 1976), and :func:`velocity_change_power` is a simpler proxy. Their
+values are not ADI watts and must not be compared with them, nor with
+Estimated Maximal MP1min.
 """
 
 from __future__ import annotations
